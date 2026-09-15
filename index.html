@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mein Alltag 🇩🇪</title>
+
+<style>
+body{
+ font-family:Arial,sans-serif;
+ background:#fff4d6;
+ text-align:center;
+ margin:0;
+ padding:20px;
+ color:#333
+}
+.box{
+ max-width:600px;
+ margin:20px auto;
+ background:white;
+ padding:25px;
+ border-radius:20px;
+ box-shadow:0 5px 15px #0001
+}
+button{
+ display:block;
+ width:100%;
+ margin:10px 0;
+ padding:13px;
+ border:0;
+ border-radius:12px;
+ background:#eee;
+ font-size:16px;
+ cursor:pointer
+}
+button:hover{background:#ffd166}
+.main{background:#d62828;color:white}
+.correct{background:#b7e4c7!important}
+.wrong{background:#ffb4a2!important}
+input{
+ width:90%;
+ padding:12px;
+ border:2px solid #ddd;
+ border-radius:10px;
+ font-size:16px
+}
+#game{display:none}
+#menu{display:block}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>🇩🇪 MEIN ALLTAG</h1>
+<p>Deutsch lernen – Schritt für Schritt.</p>
+
+<div id="player"></div>
+<h3>⭐ <span id="xp">0</span> XP</h3>
+
+<div id="menu">
+<input id="name" placeholder="Dein Name">
+<button class="main" onclick="start()">Los geht's! 🚀</button>
+
+<button onclick="play('wort')">📚 Wortschatz</button>
+<button onclick="play('quiz')">🧠 Quiz</button>
+<button onclick="play('ctest')">🧩 C-Test</button>
+</div>
+
+<div id="game">
+<h2 id="title"></h2>
+<p id="question"></p>
+<div id="answers"></div>
+<p id="feedback"></p>
+<button id="next" class="main" onclick="next()" style="display:none">
+Weiter →
+</button>
+</div>
+
+</div>
+
+<script>
+
+let xp=+localStorage.xp||0;
+let player=localStorage.player||"";
+let type="",i=0;
+
+const wort=[
+["Was bedeutet „aufstehen“?",["bangun","tidur","duduk"],0],
+["Was bedeutet „frühstücken“?",["makan malam","sarapan","belajar"],1],
+["Was bedeutet „trinken“?",["minum","makan","tidur"],0],
+["Was bedeutet „lernen“?",["bekerja","belajar","bermain"],1],
+["Was bedeutet „Freizeit“?",["waktu kerja","waktu luang","waktu sekolah"],1]
+];
+
+const quiz=[
+["Ich ___ jeden Morgen um sieben Uhr auf.",["stehe","stehen","steht"],0],
+["Am Morgen ___ ich Kaffee.",["trinke","trinken","getrunken"],0],
+["Um acht Uhr ___ ich zur Universität.",["fahre","fahren","gefahren"],0],
+["Ich ___ meine Hausaufgaben am Abend.",["mache","machen","gemacht"],0],
+["Am Wochenende ___ ich meine Freunde.",["treffe","treffen","getroffen"],0]
+];
+
+const ctest=[
+["Ich stehe jeden Morgen um sieben Uhr ___ .","auf"],
+["Danach ___ ich Kaffee.","trinke"],
+["Um acht Uhr fahre ich zur ___ .","Universität"],
+["Am Nachmittag mache ich meine ___ .","Hausaufgaben"],
+["Am Wochenende treffe ich meine ___ .","Freunde"]
+];
+
+document.getElementById("xp").textContent=xp;
+
+function start(){
+ player=document.getElementById("name").value.trim();
+ if(!player)return alert("Bitte gib deinen Namen ein 😊");
+
+ localStorage.player=player;
+ document.getElementById("player").innerHTML="Hallo, <b>"+player+"</b>! 👋";
+}
+
+function play(t){
+ if(!player)return alert("Masukkan nama dulu ya 😭");
+
+ type=t;
+ i=0;
+ document.getElementById("menu").style.display="none";
+ document.getElementById("game").style.display="block";
+
+ load();
+}
+
+function load(){
+
+ document.getElementById("feedback").textContent="";
+ document.getElementById("next").style.display="none";
+
+ let q,a;
+
+ if(type==="ctest"){
+   q=ctest[i][0];
+   document.getElementById("title").textContent="🧩 C-Test";
+   document.getElementById("question").textContent=q;
+
+   document.getElementById("answers").innerHTML=
+   `<input id="input" placeholder="Deine Antwort">
+    <button class="main" onclick="checkC()">Prüfen</button>`;
+   return;
+ }
+
+ let data=type==="wort"?wort[i]:quiz[i];
+
+ document.getElementById("title").textContent=
+ type==="wort"?"📚 Wortschatz":"🧠 Quiz";
+
+ document.getElementById("question").textContent=data[0];
+
+ document.getElementById("answers").innerHTML=
+ data[1].map((x,n)=>
+ `<button onclick="check(${n})">${x}</button>`
+ ).join("");
+}
+
+function check(n){
+
+ let data=type==="wort"?wort[i]:quiz[i];
+ let buttons=document.querySelectorAll("#answers button");
+
+ buttons[data[2]].classList.add("correct");
+
+ if(n===data[2]){
+   buttons[n].classList.add("correct");
+   addXP(type==="wort"?5:15);
+   document.getElementById("feedback").textContent=
+   "✅ Richtig! +"+(type==="wort"?5:15)+" XP";
+ }else{
+   buttons[n].classList.add("wrong");
+   document.getElementById("feedback").textContent=
+   "❌ Die richtige Antwort: "+data[1][data[2]];
+ }
+
+ buttons.forEach(b=>b.disabled=true);
+ document.getElementById("next").style.display="block";
+}
+
+function checkC(){
+
+ let answer=document.getElementById("input").value.trim();
+ let correct=ctest[i][1];
+
+ if(answer.toLowerCase()===correct.toLowerCase()){
+   addXP(25);
+   document.getElementById("feedback").textContent=
+   "🎉 Richtig! +25 XP";
+ }else{
+   document.getElementById("feedback").textContent=
+   "❌ Richtig wäre: "+correct;
+ }
+
+ document.getElementById("input").disabled=true;
+ document.querySelector("#answers button").disabled=true;
+ document.getElementById("next").style.display="block";
+}
+
+function next(){
+
+ i++;
+
+ if(i>=5){
+   alert("🎉 Fertig! "+player+" sekarang punya "+xp+" XP!");
+   document.getElementById("game").style.display="none";
+   document.getElementById("menu").style.display="block";
+   return;
+ }
+
+ load();
+}
+
+function addXP(n){
+ xp+=n;
+ localStorage.xp=xp;
+ document.getElementById("xp").textContent=xp;
+}
+
+if(player)
+ document.getElementById("player").innerHTML=
+ "Hallo, <b>"+player+"</b>! 👋";
+
+</script>
+
+</body>
+</html>
